@@ -65,3 +65,50 @@ pub async fn note_list_handler(
 
     Ok(Json(json_response))
 }
+
+pub async fn create_note_handler(
+    State(data): State<Arc<AppState>>,
+    Json(body): Json<CreateNoteSchema>,
+) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+    let user_id = uuid::Uuid::new_v4().to_string();
+    let query_result =
+        sqlx::query(r#"INSERT INTO notes (id,title,content,category) VALUES (?, ?, ?, ?)"#)
+            .bind(user_id.clone())
+            .bind(body.title.to_string())
+            .bind(body.content.to_string())
+            .bind(body.category.to_owned().unwrap_or_default())
+            .execute(&data.db)
+            .await
+            .map_err(|err: sqlx::Error| err.to_string());
+
+    if let Err(err) = query_result {
+        if err.contains("Duplicate entry") {
+            let error_response = serde_json::json!({
+                "status": "fail",
+                "message": "Note with that title already exists",
+            });
+            return Err((StatusCode::CONFLICT, Json(error_response)));
+        }
+
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({"status": "error","message": format!("{:?}", err)})),
+        ));
+    }
+
+    let note = sqlx::query_as!(NoteModel, r#"SELECT * FROM notes WHERE id = ?"#, user_id)
+        .fetch_one(&data.db)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"status": "error","message": format!("{:?}", e)})),
+            )
+        })?;
+
+    let note_response = serde_json::json!({"status": "success","data": serde_json::json!({
+        "note": filter_db_record(&note)
+    })});
+
+    Ok(Json(note_response))
+}
