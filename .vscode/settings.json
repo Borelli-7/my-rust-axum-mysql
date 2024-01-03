@@ -1,0 +1,17 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 6500,
+            "driver": "MySQL",
+            "database": "rust_sqlx",
+            "username": "admin",
+            "name": "axum_mysql"
+        }
+    ]
+}

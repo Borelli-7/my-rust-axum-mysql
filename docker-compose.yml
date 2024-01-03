@@ -9,5 +9,5 @@ services:
       - '6500:3306'
     volumes:
       - mysqlDB:/var/lib/mysql
-  volumes:
-    mysqlDB:
+volumes:
+  mysqlDB:
