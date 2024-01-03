@@ -2,7 +2,7 @@ version: '3'
 services:
   mysql: 
     image: mysql/mysql-server:latest
-    container_name: mysql
+    container_name: axum_mysql
     env_file:
       - ./.env
     ports:
